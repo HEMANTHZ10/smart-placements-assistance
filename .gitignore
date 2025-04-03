@@ -1,0 +1,34 @@
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore database and logs
+db/chroma_data/
+chroma.sqlite3
+chroma.log
+
+# Ignore virtual environment (if using locally)
+venv/
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
+
+# Ignore environment variables
+.env
+
+# Keep essential files
+!*.py
+!requirements.txt
+!README.md
+!server.py
+!app.py
+!database.py
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore binary files
+*.bin
+backend/db/chroma_data/*.bin
