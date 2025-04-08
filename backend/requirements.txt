@@ -4,3 +4,6 @@ chromadb
 pydantic
 sentence-transformers
 ollama
+python-dotenv
+redis
+spacy

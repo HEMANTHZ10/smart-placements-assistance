@@ -1,51 +1,106 @@
-import asyncio,uuid
-from database import company_insights_collection
-from sentence_transformers import SentenceTransformer
+import asyncio
+from models.chatbot_model import ChatbotModel
+from database import company_insights_collection, company_stats_collection
 
-# Loading a Sentence Transformer (Light-weight model for efficiency)
-model = SentenceTransformer("all-MiniLM-L6-v2")
 
-companies = [
-    {
-        "id":"c01",
-        "companyName":"Google",
-        "companyDesc":
-            "Google is a global technology giant specializing in search, cloud computing, AI, and software engineering. Known for innovation and data-driven solutions, it offers cutting-edge products like Google Search, Android, and Google Cloud. With a strong focus on scalability, machine learning, and user-centric design, Google remains a top employer for tech professionals worldwide.",
-        "roles":[
-            {
-                "role" : "Software Engineer",
-                "jobDesc" : "Develop scalable applications and optimize system performance.",
-                "package" : "30 LPA",
-                "rounds": {
-                    1 : "Technical & DSA test",
-                    2 : "Aptitude & Reasoning test",
-                    3 : "HR Interview"
-                }
-            },{
-                "role" : "Data Scientist",
-                "jobDesc" : "Analyze large datasets to derive insights and build ML models.",
-                "package" : "35 LPA",
-                "rounds":{
-                    1 : "Technical & DSA Interview",
-                    2 : "HR Interview"
-                }
-            }
-        ],
-        "description":"""
-            During Google's annual campus selection visits, the company has consistently attracted top talent from universities across India, offering lucrative roles in Software Engineering and Data Science.
-            The two primary roles offered during these selection drives were Software Engineer and Data Scientist. Software Engineers at Google work on developing scalable applications and optimizing system performance, undergoing a rigorous selection process comprising a Technical & DSA test, an Aptitude & Reasoning test, and a final HR interview, with a package of 30 LPA. Frequently asked questions for this role include:
-                - Explain the time and space complexity of your approach to solving a given problem.
-                - How would you optimize a large-scale distributed system?
-                - Design a URL shortening service like Bit.ly.
-                - Explain concepts of multithreading and concurrency in Java.
-                - How does garbage collection work in Python?
-            On the other hand, Data Scientists, responsible for analyzing large datasets, deriving insights, and building ML models, go through a Technical & DSA Interview followed by an HR interview, securing a 35 LPA package. Frequently asked questions for this role include:
-                - Explain the difference between supervised and unsupervised learning.
-                - How do you handle missing data in a dataset?
-                - What are the key assumptions of linear regression?
-                - How would you optimize a machine learning model for better accuracy?
-                - Can you explain the bias-variance tradeoff?
-            With its structured selection process and competitive compensation, Google has solidified its reputation as a dream employer for aspiring tech professionals, offering unparalleled career growth opportunities in cutting-edge fields.
-            """
-    }
-]
+from utils.embedding_model import get_embedding_model
+from utils.cache import get_cached_response, set_cached_response
+from utils.llm import query_ollama
+from utils.nlp import extract_entities
+
+# Chatbot Services
+
+async def get_chatbot_answer(query: str):
+    # 1. Check Cache
+    cached_response = get_cached_response(query)
+    if cached_response:
+        return {"answer": cached_response["answer"], "source": "cache"}
+
+    # 2. Extract Entities
+    entities = extract_entities(query)
+    company = None
+    year = None
+
+    for text, label in entities:
+        if label == "ORG":
+            company = text
+        elif label == "DATE" and text.isdigit():
+            year = text
+
+    # 3. Query ChromaDB (company_insights_collection)
+    model = get_embedding_model()
+    query_embedding = model.encode(query).tolist()
+
+    results = await asyncio.to_thread(
+        company_insights_collection.query,
+        query_embeddings=[query_embedding],
+        n_results=5,
+    )
+    chroma_context = "\n\n".join(results["documents"][0])
+
+    # 4. Try to get extra context from company_stats_collection
+    stats_context = ""
+    try:
+        if company or year:
+            stats_query = {}
+            if company:
+                stats_query["company_name"] = company.upper()
+            if year:
+                stats_query["year"] = year
+
+            stats_data = await asyncio.to_thread(
+                lambda: list(company_stats_collection.find(stats_query))
+            )
+
+            if stats_data:
+                stats_context = "\n\n".join([
+                    f"Company: {doc.get('company_name')}, Year: {doc.get('year')}, Stats: {doc.get('stats', '')}"
+                    for doc in stats_data
+                ])
+    except Exception as e:
+        # Log error or ignore silently
+        print(f"[WARN] Failed to fetch from stats collection: {e}")
+
+    # 5. Create final context for LLM
+    combined_context = "\n\n".join(filter(None, [chroma_context, stats_context]))
+
+    prompt = f"""
+                You are an AI-powered Placements Assistance Chatbot designed to help college students understand company-specific hiring information based on provided data.
+
+                Your role:
+                - Act as a knowledgeable assistant for student placement-related queries.
+                - Answer only using the context provided.
+                - Never fabricate or assume any data not present in the context.
+
+                Instructions:
+                1. Read the context carefully and extract all relevant facts.
+                2. Understand the student’s intent from their query.
+                3. Respond clearly and concisely with helpful information.
+                4. If possible, format the answer into bullet points or short paragraphs for better readability.
+                5. If the query includes a company name or year, ensure that information aligns with the context.
+                6. If the context lacks enough information, reply:  
+                    _"I'm sorry, I couldn't find specific information in our records to answer that right now."_
+
+                Tone:
+                - Friendly and student-centric.
+                - Clear, precise, and factual.
+
+                Context:
+                {combined_context}
+
+                Student Query:
+                {query}
+
+                Answer:"""
+
+
+    # 6. Generate response from Ollama
+    answer = await asyncio.to_thread(query_ollama, prompt)
+
+    response = {"answer": answer, "source": "llm"}
+
+    # 7. Cache 
+    if answer and response["source"] == "llm" and "Sorry" not in answer:
+        set_cached_response(query, response)
+
+    return response

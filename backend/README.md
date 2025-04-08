@@ -371,3 +371,29 @@ Deletes all Company Statistics Records at a time.
   "message": "All data deleted successfully!"
 }
 ```
+
+### ✅ Useful Commands
+
+- `python -m spacy download en_core_web_md`  
+  Downloads the `en_core_web_md` model used for Named Entity Recognition (NER) in student queries (e.g., extracting company names, years).
+
+- `ollama serve`  
+  Starts the Ollama LLM server locally on port `11434`. This allows the backend to generate AI-based answers using models like `gemma3:4b`.
+
+- `lsof -i :11434`  
+  Lists the process using Ollama’s default port `11434`. Helpful to check if it's already running or to kill it if needed.
+
+- `brew services start redis`  
+  Starts the Redis server as a background service. Used to cache chatbot responses and support rate-limiting.
+
+- `brew services stop redis`  
+  Stops the Redis background service — useful when stopping work or debugging cache-related issues.
+
+- `redis-cli`  
+  Opens the Redis command-line interface to inspect, debug, or manually modify cached values.
+
+- `redis-cli > KEYS *`  
+  Lists all keys stored in the Redis cache — useful to see which queries have been cached.
+
+- `redis-cli > DEL "<query>"`  
+  Deletes a specific query key from Redis cache. Replace `<query>` with the actual query string, e.g., `DEL "Explain Google's hiring process."`
