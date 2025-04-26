@@ -7,3 +7,5 @@ ollama
 python-dotenv
 redis
 spacy
+python-jose
+python-multipart

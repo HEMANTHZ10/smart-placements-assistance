@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from typing import List
 from models.dashboard_model import PlacementStatsModel, CompanyStatsModel
 from services.dashboard_service import (
@@ -6,6 +6,8 @@ from services.dashboard_service import (
     deleteAllPlacementStatsData, getCompanyStatsData, addCompanyStatsData, 
     deleteCompanyStatsData, deleteAllCompanyStatsData,enterPlacementStatsData,enterCompanyStatsData
 )
+from utils.auth_utils import verify_token
+
 
 router = APIRouter()
 
@@ -23,7 +25,7 @@ async def get_dashboard_data(branch: str = Query(None), year: int = Query(None))
 
 # Enter bulk Placement Stats Data at a time
 @router.post("/add-all-data")
-async def add_all_data(data_list: List[PlacementStatsModel]):
+async def add_all_data(data_list: List[PlacementStatsModel],token: None=Depends(verify_token)):
     try:
         res = await enterPlacementStatsData(data_list)
         return res
@@ -32,7 +34,7 @@ async def add_all_data(data_list: List[PlacementStatsModel]):
 
 # Enter single Placement Stats Data
 @router.post("/add-data")
-async def add_dashboard_data(data: PlacementStatsModel):
+async def add_dashboard_data(data: PlacementStatsModel,token: None=Depends(verify_token)):
     try:
         res = await addPlacementStatsData(data)
         return res
@@ -44,7 +46,7 @@ async def add_dashboard_data(data: PlacementStatsModel):
 async def delete_record(
     entry_id : str = Query(None),
     year:int = Query(None),
-    branch:str=Query(None)
+    branch:str=Query(None),token: None=Depends(verify_token)
 ):
     filters = {key: value for key, value in {"entry_id": entry_id, "year": year, "branch":branch}.items() if value is not None}
     if not filters:
@@ -59,7 +61,7 @@ async def delete_record(
 
 # Delete all Placement Stats Records at a time
 @router.delete("/delete-all-records")
-async def delete_all_records():
+async def delete_all_records(token: None=Depends(verify_token)):
     try:
         res = await deleteAllPlacementStatsData()
         if "error" in res:
@@ -83,7 +85,7 @@ async def get_company_data(company_name: str = Query(None), year: int = Query(No
 
 # Enter bulk Company Stats Data at a time
 @router.post("/add-all-company-data")
-async def add_all_data(data_list: List[CompanyStatsModel]):
+async def add_all_data(data_list: List[CompanyStatsModel],token: None=Depends(verify_token)):
     try:
         res = await enterCompanyStatsData(data_list)
         return res
@@ -92,7 +94,7 @@ async def add_all_data(data_list: List[CompanyStatsModel]):
 
 # Enter single Company Stats Data
 @router.post("/add-company-data")
-async def add_company_data(data: CompanyStatsModel):
+async def add_company_data(data: CompanyStatsModel,token: None=Depends(verify_token)):
     try:
         res = await addCompanyStatsData(data)
         return res
@@ -105,6 +107,7 @@ async def delete_company_record(
     entry_id:str=Query(None),
     year:int=Query(None),
     company_name:str=Query(None),
+    token: None=Depends(verify_token)
 ):
     filters = {key: value for key, value in {"entry_id": entry_id, "year": year, "company_name":company_name}.items() if value is not None}
     if not filters:
@@ -119,7 +122,7 @@ async def delete_company_record(
 
 # Delete all Company Stats Records at a time
 @router.delete("/delete-all-company-data")
-async def delete_all_company_records():
+async def delete_all_company_records(token: None=Depends(verify_token)):
     try:
         res = await deleteAllCompanyStatsData()
         if "error" in res:
