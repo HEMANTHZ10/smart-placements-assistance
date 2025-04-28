@@ -361,6 +361,7 @@ const PlacementAnalysis = () => {
             }`}>
               <span>
                 {calculateYearOverYearChange(
+
                   yearlyData.find(d => d.year === availableYears[0]?.toString())?.placed,
                   yearlyData.find(d => d.year === availableYears[1]?.toString())?.placed
                 )}% from last year
@@ -394,6 +395,7 @@ const PlacementAnalysis = () => {
             }`}>
               <span>
                 {calculateYearOverYearChange(
+
                   (Object.values(offersData).find(d => d.year === availableYears[0]?.toString())?.single || 0) + 
                   (Object.values(offersData).find(d => d.year === availableYears[0]?.toString())?.multiple || 0),
                   (Object.values(offersData).find(d => d.year === availableYears[1]?.toString())?.single || 0) + 

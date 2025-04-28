@@ -127,4 +127,19 @@ apiClient.interceptors.response.use(
   }
 );
 
+// Company Insights API calls
+export const companyInsightsService = {
+  getCompanyInsights: async (companyName = null) => {
+    const queryParams = new URLSearchParams();
+    if (companyName) {
+      queryParams.append('company_name', companyName);
+    }
+    const response = await fetch(`/company-insights/get-company-insights-data?${queryParams}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch company insights data');
+    }
+    return response.json();
+  }
+};
+
 export default apiClient; 

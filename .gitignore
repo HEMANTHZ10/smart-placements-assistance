@@ -32,3 +32,4 @@ venv/
 # Ignore binary files
 *.bin
 backend/db/chroma_data/*.bin
+

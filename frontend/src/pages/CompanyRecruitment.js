@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { Filter, Download, ArrowUpRight, Search } from 'lucide-react';
+import { Filter, Download, ArrowUpRight, Search, Building2, Users, Award, TrendingUp, ArrowDownRight, BarChart3 } from 'lucide-react';
 import { dashboardService } from '../services/api';
 
 
@@ -25,6 +25,7 @@ const CompanyRecruitment = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState('ALL');
+  const [sortBySalary, setSortBySalary] = useState(false);
   const BRANCHES = [
     'ALL',
     'CSE',
@@ -235,45 +236,72 @@ const CompanyRecruitment = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Company Recruitment Analysis</h1>
+    <div className="space-y-8 animate-fadeIn">
+      <div className="flex justify-between items-center bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl shadow-sm">
+        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+          Company Recruitment Analysis
+        </h1>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-4 rounded-lg shadow-md">
+        <div className="bg-gradient-to-br from-white to-indigo-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-700">Total Companies</h2>
-            <div className="text-2xl font-bold text-indigo-600">{summaryStats.totalCompanies}</div>
+            <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-indigo-600" />
+              Total Companies
+            </h2>
+            <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+              {summaryStats.totalCompanies}
+            </div>
           </div>
           <p className="text-sm text-gray-500">Current academic year</p>
-          <div className={`mt-2 ${summaryStats.yearOverYearGrowth.companies >= 0 ? 'text-green-500' : 'text-red-500'} text-sm flex items-center`}>
-            <span>{summaryStats.yearOverYearGrowth.companies >= 0 ? '↑' : '↓'} {Math.abs(summaryStats.yearOverYearGrowth.companies)}% from last year</span>
+          <div className={`mt-2 ${summaryStats.yearOverYearGrowth.companies >= 0 ? 'text-green-500' : 'text-red-500'} text-sm flex items-center gap-1`}>
+            {summaryStats.yearOverYearGrowth.companies >= 0 ? 
+              <TrendingUp className="h-4 w-4" /> : 
+              <ArrowDownRight className="h-4 w-4" />
+            }
+            <span>{Math.abs(summaryStats.yearOverYearGrowth.companies)}% from last year</span>
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow-md">
+        <div className="bg-gradient-to-br from-white to-purple-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-700">Offers per Student</h2>
-            <div className="text-2xl font-bold text-indigo-600">{summaryStats.offersPerStudent}</div>
+            <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
+              <Users className="h-5 w-5 text-purple-600" />
+              Offers per Student
+            </h2>
+            <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+              {summaryStats.offersPerStudent}
+            </div>
           </div>
           <p className="text-sm text-gray-500">Current academic year</p>
-          <div className={`mt-2 ${summaryStats.yearOverYearGrowth.offersPerStudent >= 0 ? 'text-green-500' : 'text-red-500'} text-sm flex items-center`}>
-            <span>{summaryStats.yearOverYearGrowth.offersPerStudent >= 0 ? '↑' : '↓'} {Math.abs(summaryStats.yearOverYearGrowth.offersPerStudent)}% from last year</span>
+          <div className={`mt-2 ${summaryStats.yearOverYearGrowth.offersPerStudent >= 0 ? 'text-green-500' : 'text-red-500'} text-sm flex items-center gap-1`}>
+            {summaryStats.yearOverYearGrowth.offersPerStudent >= 0 ? 
+              <TrendingUp className="h-4 w-4" /> : 
+              <ArrowDownRight className="h-4 w-4" />
+            }
+            <span>{Math.abs(summaryStats.yearOverYearGrowth.offersPerStudent)}% from last year</span>
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow-md">
+        <div className="bg-gradient-to-br from-white to-pink-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">Package Details</h2>
+            <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2 mb-4">
+              <Award className="h-5 w-5 text-pink-600" />
+              Package Details
+            </h2>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Average Package:</span>
-                <span className="text-lg font-semibold text-indigo-600">{summaryStats.averagePackage} LPA</span>
+                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-rose-600">
+                  {summaryStats.averagePackage} LPA
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Highest Package:</span>
-                <span className="text-lg font-semibold text-indigo-600">{summaryStats.highestPackage} LPA</span>
+                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-rose-600">
+                  {summaryStats.highestPackage} LPA
+                </span>
               </div>
             </div>
           </div>
@@ -281,18 +309,21 @@ const CompanyRecruitment = () => {
         </div>
       </div>
       
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-700">Company Distribution by Package Range</h2>
+      <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-700 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-indigo-600" />
+            Company Distribution by Package Range
+          </h2>
           <YearFilter />
         </div>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={400}>
           <BarChart data={getSalaryRangeData(selectedYear)}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis 
               dataKey="range" 
               interval={0} 
-              height={50}
+              height={60}
               tick={{ fontSize: 12 }}
             />
             <YAxis 
@@ -300,96 +331,164 @@ const CompanyRecruitment = () => {
             />
             <Tooltip />
             <Legend />
-            <Bar dataKey="count" name="Number of Companies" fill="#8884d8" />
+            <Bar 
+              dataKey="count" 
+              name="Number of Companies" 
+              fill="#8884d8"
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">Companies Visited (Last 5 Years)</h2>
-        <ResponsiveContainer width="100%" height={300}>
+      <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+        <h2 className="text-xl font-semibold text-gray-700 flex items-center gap-2 mb-6">
+          <TrendingUp className="h-5 w-5 text-purple-600" />
+          Companies Visited (Last 5 Years)
+        </h2>
+        <ResponsiveContainer width="100%" height={400}>
           <BarChart data={getYearlyCompanyCount()}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="year" />
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="companies" name="Number of Companies" fill="#82ca9d" />
+            <Bar 
+              dataKey="companies" 
+              name="Number of Companies" 
+              fill="#82ca9d"
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">Package Trends (Last 5 Years)</h2>
-        <ResponsiveContainer width="100%" height={300}>
+      <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+        <h2 className="text-xl font-semibold text-gray-700 flex items-center gap-2 mb-6">
+          <LineChart className="h-5 w-5 text-pink-600" />
+          Package Trends (Last 5 Years)
+        </h2>
+        <ResponsiveContainer width="100%" height={400}>
           <LineChart data={getPackageTrends()}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <defs>
+              <linearGradient id="highestGradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#ec4899" />
+                <stop offset="100%" stopColor="#db2777" />
+              </linearGradient>
+              <linearGradient id="averageGradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#8b5cf6" />
+                <stop offset="100%" stopColor="#7c3aed" />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis 
               dataKey="year"
               tick={{ fontSize: 12 }}
+              tickLine={false}
+              axisLine={false}
             />
             <YAxis 
               tick={{ fontSize: 12 }}
+              tickLine={false}
+              axisLine={false}
               label={{ 
                 value: 'Package (LPA)', 
                 angle: -90, 
                 position: 'insideLeft',
-                style: { textAnchor: 'middle' }
+                style: { textAnchor: 'middle', fill: '#6b7280', fontSize: 12 }
               }}
             />
-            <Tooltip />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                border: 'none',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                padding: '12px'
+              }}
+            />
             <Legend />
             <Line 
               type="monotone" 
               dataKey="highest" 
               name="Highest Package" 
-              stroke="#8884d8" 
-              strokeWidth={2}
-              dot={{ r: 6 }}
+              stroke="url(#highestGradient)" 
+              strokeWidth={3}
+              dot={{ r: 6, fill: '#db2777', strokeWidth: 2, stroke: '#fff' }}
+              activeDot={{ r: 8, strokeWidth: 2, stroke: '#fff' }}
             />
             <Line 
               type="monotone" 
               dataKey="average" 
               name="Average Package" 
-              stroke="#82ca9d" 
-              strokeWidth={2}
-              dot={{ r: 6 }}
+              stroke="url(#averageGradient)" 
+              strokeWidth={3}
+              dot={{ r: 6, fill: '#7c3aed', strokeWidth: 2, stroke: '#fff' }}
+              activeDot={{ r: 8, strokeWidth: 2, stroke: '#fff' }}
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
       
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-700">Top 10 Recruiters</h2>
+      <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-700 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-indigo-600" />
+            Top 10 Recruiters
+          </h2>
           <YearFilter />
         </div>
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={500}>
           <BarChart
             data={getTop10Companies(selectedYear)}
             layout="vertical"
             margin={{ top: 5, right: 30, left: 150, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" />
+            <defs>
+              <linearGradient id="topRecruitersGradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#818cf8" />
+                <stop offset="100%" stopColor="#6366f1" />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+            <XAxis 
+              type="number"
+              tickLine={false}
+              axisLine={false}
+            />
             <YAxis 
               dataKey="name" 
               type="category"
               width={140}
               tick={{ fontSize: 12 }}
+              tickLine={false}
+              axisLine={false}
             />
             <Tooltip 
               formatter={(value, name, props) => [value, props.payload.fullName]}
+              contentStyle={{ 
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                border: 'none',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                padding: '12px'
+              }}
             />
             <Legend />
-            <Bar dataKey="offers" name="Total Offers" fill="#8884d8" />
+            <Bar 
+              dataKey="offers" 
+              name="Total Offers" 
+              fill="url(#topRecruitersGradient)"
+              radius={[0, 4, 4, 0]}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-700">Company Recruitment Details</h2>
+      <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-700 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-purple-600" />
+            Company Recruitment Details
+          </h2>
           <div className="flex gap-4 items-center">
             <YearFilter />
             <BranchFilter />
@@ -399,52 +498,71 @@ const CompanyRecruitment = () => {
                 placeholder="Search companies..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-4 py-1 border border-gray-300 rounded-md"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
               />
-              <Search className="h-4 w-4 absolute left-2 top-2 text-gray-400" />
+              <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
             </div>
           </div>
         </div>
-        <div className="overflow-hidden">
-          <div className="max-h-[400px] overflow-y-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {selectedBranch === 'ALL' ? 'Total Offers' : `${selectedBranch} Offers`}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package (LPA)</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {companyData
-                  .filter(d => d.year === selectedYear)
-                  .filter(d => d.company_name.toLowerCase().includes(searchQuery.toLowerCase()))
-                  .filter(d => selectedBranch === 'ALL' ? true : d[selectedBranch] > 0)
-                  .sort((a, b) => a.company_name.localeCompare(b.company_name))
-                  .map((company, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{company.company_name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {selectedBranch === 'ALL' ? 
-                            (company.total_offers || 0) : 
-                            (company[selectedBranch] || 0)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {company.salary ? `${company.salary.toFixed(2)}` : 'N/A'}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
+        
+        <div className="max-h-[600px] overflow-y-auto rounded-xl border border-gray-200">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50 sticky top-0">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {selectedBranch === 'ALL' ? 'Total Offers' : `${selectedBranch} Offers`}
+                </th>
+                <th 
+                  className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-purple-600 transition-colors flex items-center gap-1"
+                  onClick={() => setSortBySalary(!sortBySalary)}
+                >
+                  Package (LPA)
+                  <span className="inline-block ml-1">
+                    {sortBySalary ? '↓' : '↑'}
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {companyData
+                .filter(d => d.year === selectedYear)
+                .filter(d => d.company_name.toLowerCase().includes(searchQuery.toLowerCase()))
+                .filter(d => selectedBranch === 'ALL' ? true : d[selectedBranch] > 0)
+                .sort((a, b) => {
+                  if (sortBySalary) {
+                    const aSalary = a.salary || 0;
+                    const bSalary = b.salary || 0;
+                    return bSalary - aSalary;
+                  }
+                  const aOffers = selectedBranch === 'ALL' ? (a.total_offers || 0) : (a[selectedBranch] || 0);
+                  const bOffers = selectedBranch === 'ALL' ? (b.total_offers || 0) : (b[selectedBranch] || 0);
+                  return bOffers - aOffers;
+                })
+                .map((company, index) => (
+                  <tr 
+                    key={index}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{company.company_name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-purple-600">
+                        {selectedBranch === 'ALL' ? 
+                          (company.total_offers || 0) : 
+                          (company[selectedBranch] || 0)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-indigo-600">
+                        {company.salary ? `${company.salary.toFixed(2)}` : 'N/A'}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
