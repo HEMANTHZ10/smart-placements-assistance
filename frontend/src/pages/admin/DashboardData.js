@@ -100,14 +100,30 @@ const DashboardData = () => {
   const handlePlacementSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Validate all fields are filled
-      const requiredFields = Object.keys(placementFormData);
-      const emptyFields = requiredFields.filter(field => !placementFormData[field]);
-      if (emptyFields.length > 0) {
-        alert('Please fill in all fields');
+      // Only validate branch and year
+      if (!placementFormData.branch || !placementFormData.year) {
+        alert('Please select branch and year');
         return;
       }
-      await axios.post('http://localhost:8000/dashboard/add-data', placementFormData, { headers: { Authorization: `Bearer ${getToken()}` } });
+      
+      // Ensure all numerical fields are at least 0
+      const formDataToSubmit = {
+        ...placementFormData,
+        selected_male: parseInt(placementFormData.selected_male) || 0,
+        selected_female: parseInt(placementFormData.selected_female) || 0,
+        selected_total: parseInt(placementFormData.selected_total) || 0,
+        class_total: parseInt(placementFormData.class_total) || 0,
+        registered: parseInt(placementFormData.registered) || 0,
+        not_registered: parseInt(placementFormData.not_registered) || 0,
+        not_eligible: parseInt(placementFormData.not_eligible) || 0,
+        eligible: parseInt(placementFormData.eligible) || 0,
+        single_offers: parseInt(placementFormData.single_offers) || 0,
+        multiple_offers: parseInt(placementFormData.multiple_offers) || 0,
+        total_offers: parseInt(placementFormData.total_offers) || 0,
+        total_percentage_single: parseFloat(placementFormData.total_percentage_single) || 0
+      };
+
+      await axios.post('http://localhost:8000/dashboard/add-data', formDataToSubmit, { headers: { Authorization: `Bearer ${getToken()}` } });
       setPlacementFormData({
         branch: '',
         selected_male: 0,
@@ -343,7 +359,6 @@ const DashboardData = () => {
                   id="selected_male"
                   value={placementFormData.selected_male}
                   onChange={(e) => setPlacementFormData({ ...placementFormData, selected_male: parseInt(e.target.value) })}
-                  required
                   min="0"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
@@ -356,7 +371,6 @@ const DashboardData = () => {
                   id="selected_female"
                   value={placementFormData.selected_female}
                   onChange={(e) => setPlacementFormData({ ...placementFormData, selected_female: parseInt(e.target.value) })}
-                  required
                   min="0"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
@@ -369,7 +383,6 @@ const DashboardData = () => {
                   id="selected_total"
                   value={placementFormData.selected_total}
                   onChange={(e) => setPlacementFormData({ ...placementFormData, selected_total: parseInt(e.target.value) })}
-                  required
                   min="0"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
@@ -382,7 +395,6 @@ const DashboardData = () => {
                   id="class_total"
                   value={placementFormData.class_total}
                   onChange={(e) => setPlacementFormData({ ...placementFormData, class_total: parseInt(e.target.value) })}
-                  required
                   min="0"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
@@ -395,7 +407,6 @@ const DashboardData = () => {
                   id="registered"
                   value={placementFormData.registered}
                   onChange={(e) => setPlacementFormData({ ...placementFormData, registered: parseInt(e.target.value) })}
-                  required
                   min="0"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
@@ -408,7 +419,6 @@ const DashboardData = () => {
                   id="not_registered"
                   value={placementFormData.not_registered}
                   onChange={(e) => setPlacementFormData({ ...placementFormData, not_registered: parseInt(e.target.value) })}
-                  required
                   min="0"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
@@ -421,7 +431,6 @@ const DashboardData = () => {
                   id="not_eligible"
                   value={placementFormData.not_eligible}
                   onChange={(e) => setPlacementFormData({ ...placementFormData, not_eligible: parseInt(e.target.value) })}
-                  required
                   min="0"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
@@ -434,7 +443,6 @@ const DashboardData = () => {
                   id="eligible"
                   value={placementFormData.eligible}
                   onChange={(e) => setPlacementFormData({ ...placementFormData, eligible: parseInt(e.target.value) })}
-                  required
                   min="0"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
@@ -447,7 +455,6 @@ const DashboardData = () => {
                   id="single_offers"
                   value={placementFormData.single_offers}
                   onChange={(e) => setPlacementFormData({ ...placementFormData, single_offers: parseInt(e.target.value) })}
-                  required
                   min="0"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
@@ -460,7 +467,6 @@ const DashboardData = () => {
                   id="multiple_offers"
                   value={placementFormData.multiple_offers}
                   onChange={(e) => setPlacementFormData({ ...placementFormData, multiple_offers: parseInt(e.target.value) })}
-                  required
                   min="0"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
@@ -473,7 +479,6 @@ const DashboardData = () => {
                   id="total_offers"
                   value={placementFormData.total_offers}
                   onChange={(e) => setPlacementFormData({ ...placementFormData, total_offers: parseInt(e.target.value) })}
-                  required
                   min="0"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
@@ -487,7 +492,6 @@ const DashboardData = () => {
                   id="total_percentage_single"
                   value={placementFormData.total_percentage_single}
                   onChange={(e) => setPlacementFormData({ ...placementFormData, total_percentage_single: parseFloat(e.target.value) })}
-                  required
                   min="0"
                   max="100"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"

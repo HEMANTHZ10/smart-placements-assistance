@@ -1,24 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, MessageSquare, Sparkles, HelpCircle, TrendingUp, Building2, GraduationCap } from 'lucide-react';
+import { Send, Bot, User, Loader2, MessageSquare } from 'lucide-react';
+import axios from 'axios';
 
-const predefinedQA = [
-  {
-    question: "What companies hire the most students?",
-    answer: "TCS, Infosys, and Wipro consistently hire the most students. This year, TCS hired 45, Infosys 38, and Wipro 32."
-  },
-  {
-    question: "Which sector has the highest placement rate?",
-    answer: "The IT sector has the highest placement rate at 45%, followed by Finance at 20%."
-  },
-  {
-    question: "How to prepare for interviews?",
-    answer: "Focus on core subjects, practice coding problems, work on communication skills, and prepare for behavioral questions. Mock interviews can be very helpful."
-  },
-  {
-    question: "What is the average package?",
-    answer: "The average package for this year is 8.5 LPA. The highest package offered is 45 LPA."
-  }
-];
+// const predefinedQuestions = [
+//   "What companies hire the most students?",
+//   "Which sector has the highest placement rate?",
+//   "How to prepare for interviews?",
+//   "What is the average package?"
+// ];
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -40,34 +29,54 @@ const Chatbot = () => {
     }
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const fetchChatbotResponse = async (query) => {
+    try {
+      const response = await axios.get('/api/chatbot/get-chatbot-answer', {
+        params: { query }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching chatbot response:', error);
+      return "I'm sorry, but I'm having trouble processing your request right now. Please try again later.";
+    }
+  };
+
+  const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
-    const userMessage = { id: messages.length + 1, text: inputValue, sender: 'user', timestamp: new Date() };
+    
+    // Add user message
+    const userMessage = { 
+      id: messages.length + 1, 
+      text: inputValue, 
+      sender: 'user', 
+      timestamp: new Date() 
+    };
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const response = generateResponse(inputValue);
-      setMessages(prev => [...prev, { id: prev.length + 1, text: response, sender: 'bot', timestamp: new Date() }]);
+    try {
+      // Get bot response
+      const response = await fetchChatbotResponse(inputValue);
+      
+      // Add bot message
+      setMessages(prev => [...prev, { 
+        id: prev.length + 1, 
+        text: response, 
+        sender: 'bot', 
+        timestamp: new Date() 
+      }]);
+    } catch (error) {
+      // Add error message
+      setMessages(prev => [...prev, { 
+        id: prev.length + 1, 
+        text: "I apologize, but I'm having trouble connecting to my knowledge base. Please try again later.", 
+        sender: 'bot', 
+        timestamp: new Date() 
+      }]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
-  };
-
-  const generateResponse = (query) => {
-    const lowerQuery = query.toLowerCase();
-    for (const qa of predefinedQA) {
-      if (lowerQuery.includes(qa.question.toLowerCase())) {
-        return qa.answer;
-      }
     }
-    return "I'm not sure about that. Could you try asking something else? You can also check out the suggested questions below.";
-  };
-
-  const handleQuickQuestionClick = (question) => {
-    setInputValue(question);
-    const inputElement = document.getElementById('chat-input');
-    if (inputElement) inputElement.focus();
   };
 
   const handleKeyPress = (e) => {
@@ -119,7 +128,7 @@ const Chatbot = () => {
                       ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
                       : 'bg-white border border-gray-200'
                   }`}>
-                    <p className="text-sm">{msg.text}</p>
+                    <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                   </div>
                 </div>
               </div>
@@ -127,40 +136,14 @@ const Chatbot = () => {
             {isTyping && (
               <div className="flex items-center gap-2 text-gray-500 animate-pulse">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">AI is typing...</span>
+                <span className="text-sm">AI is thinking...</span>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Questions */}
-          <div className="py-4 border-t border-gray-200 bg-white rounded-t-xl mt-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3 px-2 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-indigo-500" />
-              Suggested Questions
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {predefinedQA.map((qa, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleQuickQuestionClick(qa.question)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all
-                    hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-sm
-                    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
-                    border border-gray-200 text-gray-700"
-                >
-                  {idx === 0 && <Building2 className="h-4 w-4" />}
-                  {idx === 1 && <TrendingUp className="h-4 w-4" />}
-                  {idx === 2 && <HelpCircle className="h-4 w-4" />}
-                  {idx === 3 && <GraduationCap className="h-4 w-4" />}
-                  {qa.question}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Input */}
-          <div className="relative bg-white rounded-b-xl border-t border-gray-200 p-4">
+          <div className="relative bg-white rounded-xl border border-gray-200 p-4 mt-4">
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <input
@@ -175,13 +158,17 @@ const Chatbot = () => {
               </div>
               <button
                 onClick={handleSendMessage}
-                disabled={!inputValue.trim()}
+                disabled={!inputValue.trim() || isTyping}
                 className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl
                   hover:from-indigo-600 hover:to-purple-700 transition-all duration-200
                   disabled:opacity-50 disabled:cursor-not-allowed
                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
-                <Send className="h-5 w-5" />
+                {isTyping ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
               </button>
             </div>
           </div>
