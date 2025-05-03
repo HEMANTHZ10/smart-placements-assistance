@@ -2,13 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, MessageSquare } from "lucide-react";
 import axios from "axios";
 
-// const predefinedQuestions = [
-//   "What companies hire the most students?",
-//   "Which sector has the highest placement rate?",
-//   "How to prepare for interviews?",
-//   "What is the average package?"
-// ];
-
 const Chatbot = () => {
   const [messages, setMessages] = useState([
     {
