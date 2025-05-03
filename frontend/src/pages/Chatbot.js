@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, MessageSquare } from "lucide-react";
 import axios from "axios";
+import ReactMarkdown from "react-markdown";
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -150,7 +151,11 @@ const Chatbot = () => {
                         : "bg-white border border-gray-200"
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                    <div className="text-sm prose prose-sm max-w-none">
+                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    </div>
+
+                    {/* <p className="text-sm whitespace-pre-wrap">{msg.text}</p> */}
                   </div>
                 </div>
               </div>
