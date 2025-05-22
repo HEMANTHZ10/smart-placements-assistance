@@ -2,21 +2,85 @@ import asyncio
 from models.chatbot_model import ChatbotModel
 from database import company_insights_collection, company_stats_collection
 
-
 from utils.embedding_model import get_embedding_model
 from utils.cache import get_cached_response, set_cached_response
 from utils.llm import query_ollama
 from utils.nlp import extract_entities
 
-# Chatbot Services
+# Greeting response map
+GREETING_RESPONSES = {
+    "hello": "Hello! 👋 How can I help you with placement-related queries today?",
+    "hi": "Hi there! 😊 I'm here to assist with any recruitment or company-related info.",
+    "hey": "Hey! 👋 Ask me about company stats, offers, or placement trends.",
+    "good morning": "Good morning! 🌞 What placement info can I help you with today?",
+    "good afternoon": "Good afternoon! 🌤️ Let me know your placement or company-related query.",
+    "good evening": "Good evening! 🌙 Feel free to ask about placement records or hiring stats.",
+    "how are you": "I'm great, thanks for asking! 😊 What placement info can I fetch for you?",
+    "how's it going": "All good here! 🚀 Let me know how I can help with placement insights.",
+    "who are you": "I'm your Placements Assistant 🤖 here to help you understand company recruitment trends.",
+    "what's up": "Not much! Just helping students with placement queries. What can I do for you?",
+    "greetings": "Greetings! ✨ I'm here to support you with your placement-related questions."
+}
 
+# Keyword list to detect placement-relevant queries
+PLACEMENT_KEYWORDS = [
+    "placement", "recruitment", "company", "drive", "job", "offer", "internship",
+    "ppo", "package", "ctc", "stipend", "hiring", "selection", "shortlist",
+    "round", "interview", "aptitude", "coding", "technical", "hr", "profile",
+    "domain", "location", "role", "experience", "vacancy", "opportunity",
+    "campus", "off-campus", "on-campus", "hike", "promotion", "designation",
+    "panel", "resume", "cv", "test", "assessment", "criteria", "eligibility",
+    "batch", "freshers", "referred", "walk-in", "openings", "interviews",
+    "interviewed", "recruited", "exam", "assessment", "interview process",
+    "interview pattern", "interview experience", "joining", "bond", "agreement",
+    "notice period", "conversion", "full-time", "intern to full-time",
+    "offer letter", "joining date", "company insights", "placement stats",
+    "placement statistics", "students placed", "placement record", "average package",
+    "highest package", "placement report", "selection process"
+]
+
+# Fallback friendly message for irrelevant queries
+IRRELEVANT_RESPONSE = (
+    "I'm here to assist with placement and company-related queries only. 😊 "
+    "Feel free to ask me about companies, roles, offers, internships, or hiring stats!"
+)
+
+# Detect if it's a greeting
+def get_greeting_response(query: str) -> str | None:
+    lower_query = query.strip().lower()
+    for greet, response in GREETING_RESPONSES.items():
+        if greet in lower_query:
+            return response
+    return None
+
+# Detect if the query is irrelevant to placements
+def is_irrelevant_query(query: str) -> bool:
+    lower_query = query.lower()
+    if any(keyword in lower_query for keyword in PLACEMENT_KEYWORDS):
+        return False
+    entities = extract_entities(query)
+    for text, label in entities:
+        if label == "ORG" or (label == "DATE" and text.isdigit()):
+            return False
+    return True
+
+# Main function
 async def get_chatbot_answer(query: str):
-    # 1. Check Cache
+    # 1. Handle Greetings
+    greeting_response = get_greeting_response(query)
+    if greeting_response:
+        return {"answer": greeting_response, "source": "rule-based"}
+
+    # 2. Handle Irrelevant Queries
+    if is_irrelevant_query(query):
+        return {"answer": IRRELEVANT_RESPONSE, "source": "rule-based"}
+
+    # 3. Check Cache
     cached_response = get_cached_response(query)
     if cached_response:
         return {"answer": cached_response["answer"], "source": "cache"}
 
-    # 2. Extract Entities
+    # 4. Extract Entities
     entities = extract_entities(query)
     company = None
     year = None
@@ -27,7 +91,7 @@ async def get_chatbot_answer(query: str):
         elif label == "DATE" and text.isdigit():
             year = text
 
-    # 3. Query ChromaDB (company_insights_collection)
+    # 5. Query ChromaDB
     model = get_embedding_model()
     query_embedding = model.encode(query).tolist()
 
@@ -38,35 +102,27 @@ async def get_chatbot_answer(query: str):
     )
     chroma_context = "\n\n".join(results["documents"][0])
 
-    # 4. Try to get extra context from company_stats_collection
+    # 6. Additional Stats Context
     stats_context = ""
     try:
         filters = {}
-
         if company:
             filters["company_name"] = company.upper()
         if year:
             filters["year"] = int(year)
 
-        # Apply the filters to build conditions
         if filters:
             if len(filters) == 1:
-                # If there's only one filter, directly apply equality condition
                 key, value = next(iter(filters.items()))
                 conditions = {key: {"$eq": value}}
             else:
-                # If there are multiple filters, combine them with $and
                 conditions = {"$and": [{key: {"$eq": value}} for key, value in filters.items()]}
         else:
-            # If no filters, query all records
             conditions = {}
 
-        # Query the stats collection with the constructed conditions
         stats_data = await asyncio.to_thread(
             lambda: company_stats_collection.get(where=conditions) if filters else company_stats_collection.get()
         )
-
-        # Extract metadata if available
         metadatas = stats_data.get("metadatas", [])
 
         if metadatas:
@@ -84,10 +140,9 @@ async def get_chatbot_answer(query: str):
                 for meta in metadatas
             ])
     except Exception as e:
-        print(f"[WARN] Failed to fetch from stats collection: {e}")
-    print(f"Stats Context: {stats_context}")
+        print(f"[WARN] Failed to fetch stats context: {e}")
 
-    # 5. Create final context for LLM
+    # 7. Final Prompt
     combined_context = "\n\n".join(filter(None, [chroma_context, stats_context]))
 
     prompt = f"""
@@ -98,7 +153,10 @@ async def get_chatbot_answer(query: str):
                 - Answer only using the context provided.
                 - Never fabricate or assume any data not present in the context.
                 - Never hallucinate or generate responses by guessing or assuming, if enough context is not provided just reply with the fall back message.
-                - Never answer/respond to a query by using your own general knowledge, use only the context provided.
+                - Never answer/respond to a query by using your own general knowledge, always use the context provided.
+                - If the query is not related to company stats or placement records, respond with a friendly greeting.
+                - If the query is a greeting or small talk, respond with a friendly message.
+                - You must refrain from responding to any query if the provided context and the user's query are not clearly associated or related. Responses should only be generated when there is a direct and meaningful connection between the context and the query to ensure relevance and accuracy.
 
                 Instructions:
                 1. Read the context carefully and extract all relevant facts.
@@ -121,21 +179,19 @@ async def get_chatbot_answer(query: str):
                 - Friendly and student-centric.
                 - Clear, precise, and factual.
 
-                Context:
-                {combined_context}
+    Context:
+    {combined_context}
 
-                Student Query:
-                {query}
+    Student Query:
+    {query}
 
-                Answer:"""
+    Answer:"""
 
-
-    # 6. Generate response from Ollama
+    # 8. LLM Response
     answer = await asyncio.to_thread(query_ollama, prompt)
-
     response = {"answer": answer, "source": "llm"}
 
-    # 7. Cache 
+    # 9. Cache
     if answer and response["source"] == "llm" and "Sorry" not in answer:
         set_cached_response(query, response)
 
